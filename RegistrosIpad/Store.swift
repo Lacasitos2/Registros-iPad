@@ -93,6 +93,22 @@ final class ClassroomStore: ObservableObject {
         save()
     }
 
+    func renameGroup(_ groupID: UUID, to name: String) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty,
+              let groupIndex = groupIndex(for: groupID) else {
+            return
+        }
+
+        data.groups[groupIndex].name = trimmedName
+        save()
+    }
+
+    func moveGroups(from source: IndexSet, to destination: Int) {
+        data.groups.move(fromOffsets: source, toOffset: destination)
+        save()
+    }
+
     func addStudent(named name: String, listNumber: String? = nil, to groupID: UUID) {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty, let groupIndex = groupIndex(for: groupID) else { return }

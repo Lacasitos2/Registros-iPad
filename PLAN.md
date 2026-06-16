@@ -82,19 +82,19 @@ La prioridad es que sea comoda con el iPad en la mano, caminando por el aula, co
 
 ## Fase 6: Ergonomia de aula
 
-**Estado:** en progreso.
+**Estado:** realizada.
 
 **Objetivo:** hacer que la app se sienta como una herramienta de profesor, no como una base de datos.
 
-- Modo claro y oscuro cuidado.
-- Tamanos grandes para usar de pie.
+- Modo claro y oscuro cuidado. **Realizado.**
+- Tamanos grandes para usar de pie. **Realizado.**
 - Vista compacta y vista amplia. **Realizado.**
 - Decidir si las tarjetas de alumno deben ser minimalistas, mostrar toda la informacion o permitir elegir entre ambos modos. **Realizado: selector compacta/completa.**
 - Filtros rapidos: pendientes, no hechos, incidencias. **Realizado.**
-- Busqueda de alumno.
-- Orden personalizado.
-- Confirmaciones minimas.
-- Gestos utiles.
+- Busqueda de alumno. **Realizado.**
+- Orden personalizado de grupos. **Realizado.**
+- Confirmaciones minimas. **Realizado.**
+- Gestos utiles. **Realizado.**
 
 **Resultado esperado:** una experiencia rapida, clara y agradable durante la clase.
 
@@ -237,4 +237,11 @@ Queda solo como mejora futura:
 - Combinada la busqueda de alumno con los filtros rapidos.
 - Anadido selector de vista compacta o completa para las tarjetas de alumnos.
 - La vista compacta conserva el marcado rapido de deberes y reduce la altura de las tarjetas para ver mas alumnos a la vez.
+- Mejorada la cabecera de clase con fecha visible de la sesion, metricas rapidas y controles adaptables.
+- Anadidos contadores destacados de pendientes, no hechos e incidencias para revisar la sesion de un vistazo.
+- Permitido renombrar grupos desde la lista lateral.
+- Permitido reordenar grupos desde la lista lateral con el modo de edicion.
+- Pulido el aspecto de la pantalla de clase con fondos de sistema adaptados a modo claro y oscuro.
+- Reforzada la legibilidad de la cabecera, tarjetas de alumno y modo pupitres con superficies y bordes consistentes.
+- Marcada como realizada la fase 6 de ergonomia de aula.
 - Verificada compilacion de Swift con `xcodebuild` y `CODE_SIGNING_ALLOWED=NO`.

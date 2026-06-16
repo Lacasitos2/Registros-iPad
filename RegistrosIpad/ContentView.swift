@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 struct ContentView: View {
@@ -6,6 +7,8 @@ struct ContentView: View {
     @State private var selectedStudent: Student?
     @State private var showingImport = false
     @State private var exportURL: URL?
+    @State private var groupPendingRename: ClassGroup?
+    @State private var draftGroupName = ""
 
     var body: some View {
         NavigationSplitView {
@@ -15,6 +18,14 @@ struct ContentView: View {
                         Text(group.name)
                             .tag(group.id)
                             .swipeActions {
+                                Button {
+                                    groupPendingRename = group
+                                    draftGroupName = group.name
+                                } label: {
+                                    Label("Renombrar", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+
                                 Button(role: .destructive) {
                                     store.deleteGroup(group)
                                 } label: {
@@ -22,14 +33,24 @@ struct ContentView: View {
                                 }
                             }
                     }
+                    .onMove { source, destination in
+                        store.moveGroups(from: source, to: destination)
+                    }
                 }
             }
             .navigationTitle("Registros")
             .toolbar {
-                Button {
-                    showingImport = true
-                } label: {
-                    Label("Importar", systemImage: "square.and.arrow.down")
+                ToolbarItem(placement: .topBarLeading) {
+                    EditButton()
+                        .disabled(store.data.groups.count < 2)
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingImport = true
+                    } label: {
+                        Label("Importar", systemImage: "square.and.arrow.down")
+                    }
                 }
             }
         } detail: {
@@ -45,6 +66,24 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingImport) {
             ImportGroupView()
+        }
+        .alert("Renombrar grupo", isPresented: renameGroupAlertIsPresented) {
+            TextField("Nombre del grupo", text: $draftGroupName)
+                .textInputAutocapitalization(.words)
+
+            Button("Guardar") {
+                if let groupPendingRename {
+                    store.renameGroup(groupPendingRename.id, to: draftGroupName)
+                }
+                clearRenameDraft()
+            }
+            .disabled(draftGroupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+            Button("Cancelar", role: .cancel) {
+                clearRenameDraft()
+            }
+        } message: {
+            Text("El cambio no afecta a los registros guardados.")
         }
         .sheet(item: $selectedStudent) { student in
             if let group = store.selectedGroup {
@@ -63,6 +102,22 @@ struct ContentView: View {
                 ShareSheet(items: [exportURL])
             }
         }
+    }
+
+    private var renameGroupAlertIsPresented: Binding<Bool> {
+        Binding(
+            get: { groupPendingRename != nil },
+            set: { isPresented in
+                if !isPresented {
+                    clearRenameDraft()
+                }
+            }
+        )
+    }
+
+    private func clearRenameDraft() {
+        groupPendingRename = nil
+        draftGroupName = ""
     }
 }
 
@@ -100,6 +155,18 @@ struct GroupDashboardView: View {
         }
     }
 
+    private var pendingCount: Int {
+        group.students.filter { store.record(for: $0, in: group).homework == .unmarked }.count
+    }
+
+    private var missingCount: Int {
+        group.students.filter { store.record(for: $0, in: group).homework == .missing }.count
+    }
+
+    private var incidentsCount: Int {
+        group.students.filter { GroupQuickFilter.incidents.matches(store.record(for: $0, in: group)) }.count
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -123,7 +190,8 @@ struct GroupDashboardView: View {
             }
             .padding(20)
         }
-            .navigationTitle(group.name)
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle(group.name)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Buscar alumno")
         .fullScreenCover(isPresented: $showingDeskMode) {
             DeskModeView(group: group)
@@ -223,46 +291,117 @@ struct GroupDashboardView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Sesión de clase")
-                        .font(.title.bold())
-                    Text(studentCountText)
-                        .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 14) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 14) {
+                    headerTitle
+                    Spacer(minLength: 12)
+                    sessionTools
                 }
-                Spacer()
-                HomeworkSummaryView(group: group)
-                Button {
-                    showingDeskMode = true
-                } label: {
-                    Label("Pupitres", systemImage: "figure.walk")
-                        .font(.headline)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    headerTitle
+                    sessionTools
                 }
-                .buttonStyle(.borderedProminent)
             }
 
-            HStack(spacing: 12) {
-                Picker("Filtro", selection: $quickFilter) {
-                    ForEach(GroupQuickFilter.allCases) { filter in
-                        Label(filter.title, systemImage: filter.systemImage)
-                            .tag(filter)
-                    }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    filterPicker
+                    densityPicker
                 }
-                .pickerStyle(.segmented)
 
-                Picker("Vista", selection: $cardDensity) {
-                    ForEach(StudentCardDensity.allCases) { density in
-                        Label(density.title, systemImage: density.systemImage)
-                            .tag(density)
-                    }
+                VStack(alignment: .leading, spacing: 10) {
+                    filterPicker
+                    densityPicker
                 }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 280)
             }
         }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.secondary.opacity(0.16), lineWidth: 1)
+        }
+    }
+
+    private var headerTitle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Text("Sesión de clase")
+                    .font(.title.bold())
+
+                Text(store.selectedDate, format: .dateTime.weekday(.wide).day().month(.wide))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            Text(studentCountText)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var sessionTools: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                sessionMetrics
+                HomeworkSummaryView(group: group)
+                deskModeButton
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                sessionMetrics
+                HStack(spacing: 12) {
+                    HomeworkSummaryView(group: group)
+                    deskModeButton
+                }
+            }
+        }
+    }
+
+    private var sessionMetrics: some View {
+        HStack(spacing: 8) {
+            SessionMetricPill(title: "Pendientes", value: pendingCount, systemImage: "circle.dotted", color: .secondary)
+            SessionMetricPill(title: "No hechos", value: missingCount, systemImage: "xmark.circle", color: .red)
+            SessionMetricPill(title: "Incidencias", value: incidentsCount, systemImage: "exclamationmark.triangle", color: .orange)
+        }
+    }
+
+    private var deskModeButton: some View {
+        Button {
+            showingDeskMode = true
+        } label: {
+            Label("Pupitres", systemImage: "figure.walk")
+                .font(.headline)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+        }
+        .buttonStyle(.borderedProminent)
+    }
+
+    private var filterPicker: some View {
+        Picker("Filtro", selection: $quickFilter) {
+            ForEach(GroupQuickFilter.allCases) { filter in
+                Label(filter.title, systemImage: filter.systemImage)
+                    .tag(filter)
+            }
+        }
+        .pickerStyle(.segmented)
+    }
+
+    private var densityPicker: some View {
+        Picker("Vista", selection: $cardDensity) {
+            ForEach(StudentCardDensity.allCases) { density in
+                Label(density.title, systemImage: density.systemImage)
+                    .tag(density)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(maxWidth: 280)
     }
 
     private var studentCountText: String {
@@ -273,6 +412,29 @@ struct GroupDashboardView: View {
         }
 
         return "\(filteredStudents.count) de \(total) alumnos"
+    }
+}
+
+struct SessionMetricPill: View {
+    let title: String
+    let value: Int
+    let systemImage: String
+    let color: Color
+
+    var body: some View {
+        Label {
+            Text("\(value) \(title.lowercased())")
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        } icon: {
+            Image(systemName: systemImage)
+        }
+        .font(.caption.weight(.semibold))
+        .monospacedDigit()
+        .foregroundStyle(color)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -651,7 +813,7 @@ struct DeskModeView: View {
             .buttonStyle(.bordered)
         }
         .padding(24)
-        .background(.background)
+        .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay {
             RoundedRectangle(cornerRadius: 8)
@@ -762,12 +924,13 @@ struct StudentCardView: View {
         }
         .padding(density == .complete ? 14 : 12)
         .frame(minHeight: density == .complete ? 236 : 142, alignment: .top)
-        .background(.background)
+        .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(borderColor.opacity(0.55), lineWidth: 1.5)
         }
+        .shadow(color: Color.black.opacity(0.04), radius: 3, y: 1)
     }
 
     private var completeQuickActions: some View {
