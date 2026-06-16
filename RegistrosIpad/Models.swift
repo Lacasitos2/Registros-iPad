@@ -81,14 +81,14 @@ struct AppData: Codable {
     static let sample = AppData(
         groups: [
             ClassGroup(
-                name: "2º ESO A",
+                name: "Grupo de ejemplo",
                 students: [
-                    Student(name: "Ana García"),
-                    Student(name: "Bruno Martín"),
-                    Student(name: "Carla Ruiz"),
-                    Student(name: "Diego López"),
-                    Student(name: "Elena Sánchez"),
-                    Student(name: "Hugo Pérez")
+                    Student(name: "Alumno 1"),
+                    Student(name: "Alumno 2"),
+                    Student(name: "Alumno 3"),
+                    Student(name: "Alumno 4"),
+                    Student(name: "Alumno 5"),
+                    Student(name: "Alumno 6")
                 ]
             )
         ],
