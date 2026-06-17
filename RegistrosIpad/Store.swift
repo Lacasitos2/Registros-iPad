@@ -29,16 +29,20 @@ final class ClassroomStore: ObservableObject {
         let newStatus: HomeworkStatus
     }
 
-    init() {
-        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        fileURL = documents.appendingPathComponent("registros-ipad.json")
+    init(fileURL: URL? = nil, fallbackData: AppData = .sample) {
+        if let fileURL {
+            self.fileURL = fileURL
+        } else {
+            let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            self.fileURL = documents.appendingPathComponent("registros-ipad.json")
+        }
         selectedDate = Calendar.current.startOfDay(for: Date())
 
-        if let savedData = try? Data(contentsOf: fileURL),
-           let decoded = try? JSONDecoder.registros.decode(AppData.self, from: savedData) {
+        if let savedData = try? Data(contentsOf: self.fileURL),
+           let decoded = try? Self.decodeAppData(from: savedData) {
             data = decoded
         } else {
-            data = .sample
+            data = fallbackData
         }
 
         selectedGroupID = data.groups.first?.id
@@ -327,6 +331,28 @@ final class ClassroomStore: ObservableObject {
         let rows = incidentRows(for: group, startDate: startDate, endDate: endDate)
         let fileName = "incidencias-\(group.name.normalizedFileName).csv"
         return writeCSV(rows: rows, fileName: fileName)
+    }
+
+    func exportBackup() -> URL? {
+        let fileName = "copia-registros-ipad-\(DateFormatter.backupFileName.string(from: Date())).json"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+        do {
+            let encoded = try Self.encodeAppData(data)
+            try encoded.write(to: url, options: .atomic)
+            return url
+        } catch {
+            return nil
+        }
+    }
+
+    func restoreBackup(from url: URL) throws {
+        let backupData = try Data(contentsOf: url)
+        let decoded = try Self.decodeAppData(from: backupData)
+        data = decoded
+        selectedGroupID = decoded.groups.first?.id
+        lastHomeworkChange = nil
+        save()
     }
 
     private func csvRows(for group: ClassGroup) -> [[String]] {
@@ -875,11 +901,27 @@ final class ClassroomStore: ObservableObject {
 
     private func save() {
         do {
-            let encoded = try JSONEncoder.registros.encode(data)
+            let encoded = try Self.encodeAppData(data)
             try encoded.write(to: fileURL, options: .atomic)
         } catch {
             assertionFailure("No se pudieron guardar los datos: \(error)")
         }
+    }
+
+    private static func encodeAppData(_ data: AppData) throws -> Data {
+        try JSONEncoder.registros.encode(PersistedAppData(data: data))
+    }
+
+    private static func decodeAppData(from rawData: Data) throws -> AppData {
+        if let persisted = try? JSONDecoder.registros.decode(PersistedAppData.self, from: rawData) {
+            guard persisted.schemaVersion <= PersistedAppData.currentSchemaVersion else {
+                throw PersistenceError.unsupportedSchemaVersion(persisted.schemaVersion)
+            }
+
+            return persisted.data
+        }
+
+        return try JSONDecoder.registros.decode(AppData.self, from: rawData)
     }
 
     private static func escapeCSV(_ value: String) -> String {
@@ -888,6 +930,10 @@ final class ClassroomStore: ObservableObject {
         }
         return value
     }
+}
+
+enum PersistenceError: Error {
+    case unsupportedSchemaVersion(Int)
 }
 
 private extension JSONEncoder {
@@ -912,6 +958,12 @@ private extension DateFormatter {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .none
+        return formatter
+    }()
+
+    static let backupFileName: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd-HHmm"
         return formatter
     }()
 }

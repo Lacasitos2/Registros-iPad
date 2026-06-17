@@ -100,15 +100,17 @@ La prioridad es que sea comoda con el iPad en la mano, caminando por el aula, co
 
 ## Fase 7: Robustez y seguridad de datos
 
+**Estado:** realizada.
+
 **Objetivo:** poder confiar en la app.
 
-- Copia de seguridad manual.
-- Restaurar desde archivo.
-- Exportar todos los datos.
-- Evitar perdida accidental de grupos.
-- Tests de modelo y exportacion.
-- Migraciones de datos si cambia la estructura.
-- Valorar sincronizacion con iCloud mas adelante.
+- Copia de seguridad manual. **Realizado.**
+- Restaurar desde archivo. **Realizado.**
+- Exportar todos los datos. **Realizado como copia JSON completa.**
+- Evitar perdida accidental de grupos y alumnos. **Realizado.**
+- Tests de modelo y exportacion. **Realizado con cobertura inicial: copia/restauracion, versionado, compatibilidad legacy, borrados y exportaciones CSV clave.**
+- Migraciones de datos si cambia la estructura. **Preparado con formato versionado `schemaVersion`.**
+- Valorar sincronizacion con iCloud mas adelante. **Aplazado como mejora futura.**
 
 **Resultado esperado:** usar la app sin miedo a perder registros.
 
@@ -218,6 +220,7 @@ Queda solo como mejora futura:
 - Iniciada la fase 5 con exportacion CSV por alumno desde su ficha.
 - La exportacion por alumno respeta el periodo seleccionado en la ficha y comparte el archivo mediante la hoja nativa de iPadOS.
 - Anadida exportacion CSV de resumen de deberes por grupo.
+
 - El resumen de deberes permite elegir todo, ultimos 30 dias, trimestre o rango personalizado antes de compartirlo.
 - Anadida exportacion CSV de incidencias y observaciones por grupo.
 - La exportacion de incidencias usa el mismo selector de periodo y lista solo registros con conducta marcada u observacion escrita.
@@ -245,3 +248,24 @@ Queda solo como mejora futura:
 - Reforzada la legibilidad de la cabecera, tarjetas de alumno y modo pupitres con superficies y bordes consistentes.
 - Marcada como realizada la fase 6 de ergonomia de aula.
 - Verificada compilacion de Swift con `xcodebuild` y `CODE_SIGNING_ALLOWED=NO`.
+
+### 2026-06-17
+
+- Iniciada la fase 7 de robustez y seguridad de datos.
+- Anadida copia de seguridad manual en JSON con todos los grupos, alumnos, registros y comentarios rapidos.
+- Anadida restauracion desde una copia JSON seleccionada en Archivos.
+- Anadido menu "Datos" en la barra lateral para copia y restauracion.
+- Anadida confirmacion antes de eliminar un grupo completo con sus alumnos y registros.
+- Verificada compilacion con `xcodebuild` y `CODE_SIGNING_ALLOWED=NO`.
+- Anadida confirmacion tambien al borrar alumnos desde el gesto o modo edicion de la lista.
+- Anadido target de tests `RegistrosIpadTests`.
+- Anadidos tests iniciales para copia/restauracion completa y exportacion CSV de resumen de deberes.
+- Verificado el target de tests con `xcodebuild build-for-testing`.
+- Anadido formato persistente versionado con `schemaVersion` para preparar migraciones futuras.
+- Mantenida compatibilidad de lectura con copias antiguas sin versionado.
+- Anadidos tests para confirmar que las copias nuevas llevan version y que los datos antiguos siguen cargando.
+- Verificado de nuevo el target de tests con `xcodebuild build-for-testing`; la ejecucion en simulador sigue bloqueandose al lanzar el host de tests.
+- Mejorados los avisos de error en copia, restauracion y exportaciones cuando no se puede crear o leer un archivo.
+- Anadidos tests de borrado de grupo, borrado de alumno y exportacion CSV de incidencias.
+- Marcada como realizada la fase 7 de robustez y seguridad de datos; iCloud queda aplazado como mejora futura.
+- Verificado el target de tests con `xcodebuild build-for-testing`.

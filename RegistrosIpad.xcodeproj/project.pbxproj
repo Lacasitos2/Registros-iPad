@@ -15,7 +15,18 @@
 		6B7F00212C00000100AA0001 /* XLSXImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7F00202C00000100AA0001 /* XLSXImporter.swift */; };
 		6B7F00242C00000100AA0001 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 6B7F00232C00000100AA0001 /* ZIPFoundation */; };
 		6B7F00262C00000100AA0001 /* StudentImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7F00252C00000100AA0001 /* StudentImport.swift */; };
+		6B7F00302C00000100AA0001 /* ClassroomStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7F002F2C00000100AA0001 /* ClassroomStoreTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6B7F00372C00000100AA0001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6B7F00002C00000100AA0001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B7F00052C00000100AA0001;
+			remoteInfo = RegistrosIpad;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		6B7F00032C00000100AA0001 /* RegistrosIpad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RegistrosIpad.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -26,6 +37,8 @@
 		6B7F000B2C00000100AA0001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6B7F00202C00000100AA0001 /* XLSXImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XLSXImporter.swift; sourceTree = "<group>"; };
 		6B7F00252C00000100AA0001 /* StudentImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentImport.swift; sourceTree = "<group>"; };
+		6B7F002E2C00000100AA0001 /* RegistrosIpadTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RegistrosIpadTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B7F002F2C00000100AA0001 /* ClassroomStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassroomStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,6 +50,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6B7F00312C00000100AA0001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -44,6 +64,7 @@
 			isa = PBXGroup;
 			children = (
 				6B7F00062C00000100AA0001 /* RegistrosIpad */,
+				6B7F002C2C00000100AA0001 /* RegistrosIpadTests */,
 				6B7F00022C00000100AA0001 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				6B7F00032C00000100AA0001 /* RegistrosIpad.app */,
+				6B7F002E2C00000100AA0001 /* RegistrosIpadTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -68,6 +90,14 @@
 				6B7F000B2C00000100AA0001 /* Assets.xcassets */,
 			);
 			path = RegistrosIpad;
+			sourceTree = "<group>";
+		};
+		6B7F002C2C00000100AA0001 /* RegistrosIpadTests */ = {
+			isa = PBXGroup;
+			children = (
+				6B7F002F2C00000100AA0001 /* ClassroomStoreTests.swift */,
+			);
+			path = RegistrosIpadTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -93,6 +123,26 @@
 			productReference = 6B7F00032C00000100AA0001 /* RegistrosIpad.app */;
 			productType = "com.apple.product-type.application";
 		};
+		6B7F002D2C00000100AA0001 /* RegistrosIpadTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6B7F00362C00000100AA0001 /* Build configuration list for PBXNativeTarget "RegistrosIpadTests" */;
+			buildPhases = (
+				6B7F00322C00000100AA0001 /* Sources */,
+				6B7F00312C00000100AA0001 /* Frameworks */,
+				6B7F00332C00000100AA0001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6B7F00382C00000100AA0001 /* PBXTargetDependency */,
+			);
+			name = RegistrosIpadTests;
+			packageProductDependencies = (
+			);
+			productName = RegistrosIpadTests;
+			productReference = 6B7F002E2C00000100AA0001 /* RegistrosIpadTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -105,6 +155,10 @@
 				TargetAttributes = {
 					6B7F00052C00000100AA0001 = {
 						CreatedOnToolsVersion = 26.5;
+					};
+					6B7F002D2C00000100AA0001 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 6B7F00052C00000100AA0001;
 					};
 				};
 			};
@@ -126,6 +180,7 @@
 			projectRoot = "";
 			targets = (
 				6B7F00052C00000100AA0001 /* RegistrosIpad */,
+				6B7F002D2C00000100AA0001 /* RegistrosIpadTests */,
 			);
 		};
 /* End PBXProject section */
@@ -136,6 +191,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B7F00112C00000100AA0001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B7F00332C00000100AA0001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -155,7 +217,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6B7F00322C00000100AA0001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B7F00302C00000100AA0001 /* ClassroomStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6B7F00382C00000100AA0001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B7F00052C00000100AA0001 /* RegistrosIpad */;
+			targetProxy = 6B7F00372C00000100AA0001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		6B7F00132C00000100AA0001 /* Debug */ = {
@@ -348,6 +426,58 @@
 			};
 			name = Release;
 		};
+		6B7F00342C00000100AA0001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L5Q2ZP22A7;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.carloslaca.RegistrosIpadTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RegistrosIpad.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RegistrosIpad";
+				TEST_TARGET_NAME = RegistrosIpad;
+			};
+			name = Debug;
+		};
+		6B7F00352C00000100AA0001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L5Q2ZP22A7;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.carloslaca.RegistrosIpadTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RegistrosIpad.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RegistrosIpad";
+				TEST_TARGET_NAME = RegistrosIpad;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -365,6 +495,15 @@
 			buildConfigurations = (
 				6B7F00162C00000100AA0001 /* Debug */,
 				6B7F00172C00000100AA0001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6B7F00362C00000100AA0001 /* Build configuration list for PBXNativeTarget "RegistrosIpadTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B7F00342C00000100AA0001 /* Debug */,
+				6B7F00352C00000100AA0001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

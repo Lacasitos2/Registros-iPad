@@ -95,3 +95,15 @@ struct AppData: Codable {
         records: []
     )
 }
+
+struct PersistedAppData: Codable {
+    static let currentSchemaVersion = 1
+
+    var schemaVersion: Int
+    var data: AppData
+
+    init(schemaVersion: Int = Self.currentSchemaVersion, data: AppData) {
+        self.schemaVersion = schemaVersion
+        self.data = data
+    }
+}

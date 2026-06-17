@@ -2,13 +2,21 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
+struct OperationMessage: Identifiable {
+    let id = UUID()
+    let text: String
+}
+
 struct ContentView: View {
     @EnvironmentObject private var store: ClassroomStore
     @State private var selectedStudent: Student?
     @State private var showingImport = false
     @State private var exportURL: URL?
     @State private var groupPendingRename: ClassGroup?
+    @State private var groupPendingDeletion: ClassGroup?
     @State private var draftGroupName = ""
+    @State private var showingBackupImporter = false
+    @State private var operationMessage: OperationMessage?
 
     var body: some View {
         NavigationSplitView {
@@ -27,7 +35,7 @@ struct ContentView: View {
                                 .tint(.blue)
 
                                 Button(role: .destructive) {
-                                    store.deleteGroup(group)
+                                    groupPendingDeletion = group
                                 } label: {
                                     Label("Eliminar", systemImage: "trash")
                                 }
@@ -45,11 +53,27 @@ struct ContentView: View {
                         .disabled(store.data.groups.count < 2)
                 }
 
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
                         showingImport = true
                     } label: {
                         Label("Importar", systemImage: "square.and.arrow.down")
+                    }
+
+                    Menu {
+                        Button {
+                            share(store.exportBackup(), failureMessage: "No se pudo crear la copia de seguridad.")
+                        } label: {
+                            Label("Copia de seguridad", systemImage: "externaldrive")
+                        }
+
+                        Button {
+                            showingBackupImporter = true
+                        } label: {
+                            Label("Restaurar copia", systemImage: "arrow.clockwise.icloud")
+                        }
+                    } label: {
+                        Label("Datos", systemImage: "folder.badge.gearshape")
                     }
                 }
             }
@@ -58,7 +82,8 @@ struct ContentView: View {
                 GroupDashboardView(
                     group: group,
                     selectedStudent: $selectedStudent,
-                    exportURL: $exportURL
+                    exportURL: $exportURL,
+                    operationMessage: $operationMessage
                 )
             } else {
                 ContentUnavailableView("Sin grupos", systemImage: "person.3", description: Text("Importa una lista de alumnos para empezar."))
@@ -66,6 +91,13 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingImport) {
             ImportGroupView()
+        }
+        .fileImporter(
+            isPresented: $showingBackupImporter,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: false
+        ) { result in
+            restoreBackup(result)
         }
         .alert("Renombrar grupo", isPresented: renameGroupAlertIsPresented) {
             TextField("Nombre del grupo", text: $draftGroupName)
@@ -84,6 +116,24 @@ struct ContentView: View {
             }
         } message: {
             Text("El cambio no afecta a los registros guardados.")
+        }
+        .alert("Eliminar grupo", isPresented: deleteGroupAlertIsPresented, presenting: groupPendingDeletion) { group in
+            Button("Eliminar", role: .destructive) {
+                store.deleteGroup(group)
+                groupPendingDeletion = nil
+            }
+            Button("Cancelar", role: .cancel) {
+                groupPendingDeletion = nil
+            }
+        } message: { group in
+            Text("Se eliminara \(group.name), sus alumnos y todos sus registros guardados.")
+        }
+        .alert("Aviso", isPresented: operationMessageIsPresented) {
+            Button("Aceptar") {
+                operationMessage = nil
+            }
+        } message: {
+            Text(operationMessage?.text ?? "")
         }
         .sheet(item: $selectedStudent) { student in
             if let group = store.selectedGroup {
@@ -115,9 +165,63 @@ struct ContentView: View {
         )
     }
 
+    private var deleteGroupAlertIsPresented: Binding<Bool> {
+        Binding(
+            get: { groupPendingDeletion != nil },
+            set: { isPresented in
+                if !isPresented {
+                    groupPendingDeletion = nil
+                }
+            }
+        )
+    }
+
+    private var operationMessageIsPresented: Binding<Bool> {
+        Binding(
+            get: { operationMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    operationMessage = nil
+                }
+            }
+        )
+    }
+
     private func clearRenameDraft() {
         groupPendingRename = nil
         draftGroupName = ""
+    }
+
+    private func restoreBackup(_ result: Result<[URL], Error>) {
+        do {
+            guard let url = try result.get().first else {
+                operationMessage = OperationMessage(text: "No se selecciono ningun archivo.")
+                return
+            }
+            let didAccess = url.startAccessingSecurityScopedResource()
+            defer {
+                if didAccess {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            }
+
+            try store.restoreBackup(from: url)
+            operationMessage = OperationMessage(text: "Copia restaurada correctamente.")
+        } catch PersistenceError.unsupportedSchemaVersion {
+            operationMessage = OperationMessage(text: "La copia usa una version de datos mas reciente que esta app.")
+        } catch DecodingError.dataCorrupted, DecodingError.keyNotFound, DecodingError.typeMismatch, DecodingError.valueNotFound {
+            operationMessage = OperationMessage(text: "El archivo seleccionado no parece ser una copia valida de Registros iPad.")
+        } catch {
+            operationMessage = OperationMessage(text: "No se pudo leer la copia seleccionada.")
+        }
+    }
+
+    private func share(_ url: URL?, failureMessage: String) {
+        if let url {
+            exportURL = url
+        } else {
+            operationMessage = OperationMessage(text: failureMessage)
+        }
     }
 }
 
@@ -126,6 +230,7 @@ struct GroupDashboardView: View {
     let group: ClassGroup
     @Binding var selectedStudent: Student?
     @Binding var exportURL: URL?
+    @Binding var operationMessage: OperationMessage?
     @State private var showingDeskMode = false
     @State private var showingStudentManager = false
     @State private var showingHomeworkExport = false
@@ -253,12 +358,12 @@ struct GroupDashboardView: View {
                 }
                 .disabled(store.lastHomeworkChange == nil)
 
-                Menu {
-                    Button {
-                        exportURL = store.exportCSV(for: group)
-                    } label: {
-                        Label("Registros completos", systemImage: "tablecells")
-                    }
+                    Menu {
+                        Button {
+                            share(store.exportCSV(for: group))
+                        } label: {
+                            Label("Registros completos", systemImage: "tablecells")
+                        }
 
                     Button {
                         showingHomeworkExport = true
@@ -413,6 +518,14 @@ struct GroupDashboardView: View {
 
         return "\(filteredStudents.count) de \(total) alumnos"
     }
+
+    private func share(_ url: URL?) {
+        if let url {
+            exportURL = url
+        } else {
+            operationMessage = OperationMessage(text: "No se pudo crear el archivo de exportacion.")
+        }
+    }
 }
 
 struct SessionMetricPill: View {
@@ -520,6 +633,7 @@ struct FilteredGroupExportView: View {
     @State private var customStartDate = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @State private var customEndDate = Date()
     @State private var exportURL: URL?
+    @State private var operationMessage: OperationMessage?
 
     private var dateBounds: (start: Date?, end: Date?) {
         historyFilter.dateBounds(
@@ -580,11 +694,33 @@ struct FilteredGroupExportView: View {
                     ShareSheet(items: [exportURL])
                 }
             }
+            .alert("Aviso", isPresented: operationMessageIsPresented) {
+                Button("Aceptar") {
+                    operationMessage = nil
+                }
+            } message: {
+                Text(operationMessage?.text ?? "")
+            }
         }
     }
 
     private func exportFile() {
-        exportURL = export(group, dateBounds.start, dateBounds.end, periodDescription)
+        if let url = export(group, dateBounds.start, dateBounds.end, periodDescription) {
+            exportURL = url
+        } else {
+            operationMessage = OperationMessage(text: "No se pudo crear el archivo de exportacion.")
+        }
+    }
+
+    private var operationMessageIsPresented: Binding<Bool> {
+        Binding(
+            get: { operationMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    operationMessage = nil
+                }
+            }
+        )
     }
 }
 
@@ -595,6 +731,7 @@ struct ManageStudentsView: View {
     @State private var newStudentName = ""
     @State private var newStudentListNumber = ""
     @State private var studentPendingDeletion: Student?
+    @State private var studentOffsetsPendingDeletion: IndexSet?
 
     private var group: ClassGroup? {
         store.data.groups.first { $0.id == groupID }
@@ -658,7 +795,7 @@ struct ManageStudentsView: View {
                             }
                         }
                         .onDelete { offsets in
-                            store.deleteStudents(at: offsets, in: groupID)
+                            studentOffsetsPendingDeletion = offsets
                         }
                         .onMove { source, destination in
                             store.moveStudents(from: source, to: destination, in: groupID)
@@ -695,6 +832,19 @@ struct ManageStudentsView: View {
             } message: { student in
                 Text("Se quitara \(student.displayName) del grupo y tambien sus registros guardados.")
             }
+            .alert("Quitar alumnos", isPresented: deleteOffsetsConfirmationIsPresented) {
+                Button("Quitar", role: .destructive) {
+                    if let studentOffsetsPendingDeletion {
+                        store.deleteStudents(at: studentOffsetsPendingDeletion, in: groupID)
+                    }
+                    studentOffsetsPendingDeletion = nil
+                }
+                Button("Cancelar", role: .cancel) {
+                    studentOffsetsPendingDeletion = nil
+                }
+            } message: {
+                Text(deleteOffsetsMessage)
+            }
         }
     }
 
@@ -707,6 +857,32 @@ struct ManageStudentsView: View {
                 }
             }
         )
+    }
+
+    private var deleteOffsetsConfirmationIsPresented: Binding<Bool> {
+        Binding(
+            get: { studentOffsetsPendingDeletion != nil },
+            set: { isPresented in
+                if !isPresented {
+                    studentOffsetsPendingDeletion = nil
+                }
+            }
+        )
+    }
+
+    private var deleteOffsetsMessage: String {
+        guard let group, let studentOffsetsPendingDeletion else {
+            return "Tambien se eliminaran sus registros guardados."
+        }
+
+        let names = studentOffsetsPendingDeletion
+            .compactMap { group.students.indices.contains($0) ? group.students[$0].displayName : nil }
+
+        if names.count == 1, let name = names.first {
+            return "Se quitara \(name) del grupo y tambien sus registros guardados."
+        }
+
+        return "Se quitaran \(names.count) alumnos del grupo y tambien sus registros guardados."
     }
 
     private func addStudent() {
@@ -1121,6 +1297,7 @@ struct StudentDetailView: View {
     @State private var customStartDate = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @State private var customEndDate = Date()
     @State private var exportURL: URL?
+    @State private var operationMessage: OperationMessage?
     private let summaryColumns = [
         GridItem(.adaptive(minimum: 130), spacing: 10)
     ]
@@ -1310,6 +1487,13 @@ struct StudentDetailView: View {
                     ShareSheet(items: [exportURL])
                 }
             }
+            .alert("Aviso", isPresented: operationMessageIsPresented) {
+                Button("Aceptar") {
+                    operationMessage = nil
+                }
+            } message: {
+                Text(operationMessage?.text ?? "")
+            }
         }
     }
 
@@ -1405,23 +1589,42 @@ struct StudentDetailView: View {
         if shouldIncludeDraft {
             store.updateRecord(draft)
         }
-        exportURL = store.exportCSV(
+        share(store.exportCSV(
             for: student,
             in: group,
             records: filteredRecords(from: recordsIncludingDraft)
-        )
+        ))
     }
 
     private func exportCurrentFilterAsPDF() {
         if shouldIncludeDraft {
             store.updateRecord(draft)
         }
-        exportURL = store.exportStudentPDF(
+        share(store.exportStudentPDF(
             for: student,
             in: group,
             records: filteredRecords(from: recordsIncludingDraft),
             periodDescription: periodDescription
+        ))
+    }
+
+    private var operationMessageIsPresented: Binding<Bool> {
+        Binding(
+            get: { operationMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    operationMessage = nil
+                }
+            }
         )
+    }
+
+    private func share(_ url: URL?) {
+        if let url {
+            exportURL = url
+        } else {
+            operationMessage = OperationMessage(text: "No se pudo crear el archivo de exportacion.")
+        }
     }
 
     private func appendQuickNote(_ note: String) {
@@ -2027,6 +2230,7 @@ private struct ImportedSpreadsheetSheet {
 
 private extension UTType {
     static let xlsx = UTType(filenameExtension: "xlsx")!
+    static let json = UTType(filenameExtension: "json")!
 }
 
 struct ShareSheet: UIViewControllerRepresentable {
